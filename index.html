@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Registry</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles for better readability and aesthetics */
@@ -24,8 +23,7 @@
         <h1 class="text-4xl font-extrabold text-gray-800 mb-8 text-center">Document Registry Tracker</h1>
         <p id="auth-status" class="text-center mb-4 text-xs text-gray-500">Initializing...</p>
 
-        <!-- LOGIN VIEW (Initially Visible or based on session) -->
-        <section id="login-view-container" class="container-card bg-white p-8 rounded-xl max-w-sm mx-auto">
+        <section id="login-view-container" class="container-card bg-white p-8 rounded-xl max-w-sm mx-auto mb-8">
             <h2 class="text-2xl font-semibold text-indigo-700 mb-6 text-center">Admin Login</h2>
             <form id="login-form" class="space-y-4">
                 <div>
@@ -46,36 +44,29 @@
         </section>
 
 
-        <!-- MAIN APPLICATION CONTAINER (Hidden until login) -->
-        <section id="app-view-container" class="hidden">
+        <section id="app-view-container">
             
-            <!-- View Toggle & Logout Buttons -->
             <div class="mb-6 flex justify-between items-center">
-                <button id="view-toggle-button" class="bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-lg transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <button id="view-toggle-button" class="hidden bg-indigo-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-lg transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                     Record New Document
                 </button>
-                <button id="logout-button" class="bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 transition duration-150 ease-in-out">
+                <button id="logout-button" class="hidden bg-red-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-600 transition duration-150 ease-in-out">
                     Logout
                 </button>
             </div>
 
 
-            <!-- FORM VIEW (Hidden by default) -->
             <section id="form-view-container" class="hidden container-card bg-white p-6 md:p-8 rounded-xl mb-10">
                 <h2 id="form-title" class="text-2xl font-semibold text-indigo-700 mb-6">Add New Document</h2>
                 <form id="document-form" class="space-y-4">
-                    <!-- Hidden ID field for updates -->
                     <input type="hidden" id="docId" value="">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Document Number -->
                         <div>
                             <label for="docNumber" class="block text-sm font-medium text-gray-700">Document Number</label>
                             <input type="text" id="docNumber" required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-
-                        <!-- Document Date -->
                         <div>
                             <label for="docDate" class="block text-sm font-medium text-gray-700">Date Issued</label>
                             <input type="date" id="docDate" required
@@ -83,19 +74,16 @@
                         </div>
                     </div>
 
-                    <!-- Document Title -->
                     <div>
                         <label for="docTitle" class="block text-sm font-medium text-gray-700">Title / Subject</label>
                         <input type="text" id="docTitle" required
                             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
 
-                    <!-- Document Type (DYNAMIC) -->
                     <div>
                         <label for="docType" class="block text-sm font-medium text-gray-700">Document Type</label>
                         <select id="docType" required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white">
-                            <!-- Options will be populated by JavaScript from the database -->
                             <option value="" disabled selected>Select a document type</option>
                         </select>
                     </div>
@@ -106,46 +94,49 @@
                             Record Document
                         </button>
                         <button type="button" id="cancel-edit-button" class="hidden w-auto bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-500 transition duration-150 ease-in-out">
-                            Cancel Edit
+                            Cancel
                         </button>
                     </div>
                 </form>
             </section>
 
 
-            <!-- LIST & SEARCH VIEW -->
             <section id="list-view-container">
                 
                 <div class="container-card bg-white p-6 md:p-8 rounded-xl mb-6">
                     <h2 class="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Document Dashboard</h2>
                     
-                    <!-- Search and Filter Bar -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="md:col-span-2">
+                    <form id="search-form" class="flex gap-4 mb-6">
+                        <div class="flex-grow">
                             <label for="search-input" class="sr-only">Search Documents</label>
                             <input type="text" id="search-input" placeholder="Search by Document # or Title..."
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" oninput="handleSearchAndFilter()">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
-                        <div>
-                            <label for="filter-type" class="sr-only">Filter by Type</label>
-                            <select id="filter-type" onchange="handleSearchAndFilter()"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white">
-                                <!-- Options will be populated by JavaScript from the database -->
-                            </select>
-                        </div>
-                    </div>
+                        
+                        <button type="button" id="refresh-button"
+                                class="bg-gray-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-gray-600 transition duration-150 ease-in-out shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-7.3 3.3L3 9"/>
+                                <path d="M3 3v6h6"/>
+                                <path d="M3 12a9 9 0 0 0 17.7 2.9L21 15"/>
+                                <path d="M21 21v-6h-6"/>
+                            </svg>
+                        </button>
+                        
+                        <button type="submit" id="search-button"
+                                class="bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            Search
+                        </button>
+                    </form>
 
-                    <!-- Document List Container (Categorized documents will be inserted here) -->
                     <div id="document-categories-container" class="space-y-8">
                         <p id="loading-message" class="text-center text-indigo-500 font-medium p-8">Loading documents...</p>
-                        <!-- Documents will be dynamically inserted here -->
-                    </div>
+                        </div>
 
                 </div>
             </section>
             
-            <!-- Type Management Section -->
-            <section id="type-management-container" class="container-card bg-white p-6 md:p-8 rounded-xl mb-10 mt-6">
+            <section id="type-management-container" class="hidden container-card bg-white p-6 md:p-8 rounded-xl mb-10 mt-6">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Manage Document Types</h2>
                 
                 <form id="new-type-form" class="flex flex-col md:flex-row gap-4 items-end mb-8">
@@ -163,22 +154,16 @@
                 <div id="type-list-display">
                     <h3 class="text-lg font-medium text-gray-700 mb-3">Currently Available Types:</h3>
                     <div id="type-tags" class="flex flex-wrap gap-2">
-                        <!-- Type tags will be dynamically inserted here -->
-                    </div>
+                        </div>
                     <p id="type-loading-message" class="text-sm text-gray-500 mt-4 hidden">Loading types...</p>
                 </div>
             </section>
 
 
-        </section> <!-- End of app-view-container -->
-
-
-        <!-- Notification Message -->
-        <div id="notification-box" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl hidden" role="alert">
+        </section> <div id="notification-box" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl hidden" role="alert">
             Message will appear here.
         </div>
 
-        <!-- Confirmation Modal Structure (for delete actions) -->
         <div id="confirmation-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center transition-opacity duration-300">
             <div class="bg-white rounded-xl shadow-2xl p-6 w-11/12 md:max-w-md transform transition-all duration-300 scale-100">
                 <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-title">Confirm Deletion</h3>
@@ -193,9 +178,31 @@
                 </div>
             </div>
         </div>
+
+        <div id="link-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 hidden flex items-center justify-center transition-opacity duration-300">
+            <div class="bg-white rounded-xl shadow-2xl p-6 w-11/12 md:max-w-md transform transition-all duration-300 scale-100">
+                <h3 class="text-xl font-bold text-gray-800 mb-4" id="link-modal-title">Link File to Document</h3>
+                <p class="text-gray-600 mb-4">Enter the external URL for Document #<span id="link-doc-number" class="font-bold"></span>.</p>
+                <form id="link-file-form" class="space-y-4">
+                    <input type="hidden" id="link-doc-id" value="">
+                    <div>
+                        <label for="file-link-input" class="block text-sm font-medium text-gray-700">File URL (PDF, Doc, etc.)</label>
+                        <input type="url" id="file-link-input" required placeholder="https://example.com/document.pdf"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="link-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                            Cancel
+                        </button>
+                        <button type="submit" id="link-confirm-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
+                            Save Link
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <!-- Supabase SDK -->
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -210,7 +217,7 @@
         let supabase;
         let user = null; 
         
-        // New Global State/Constants
+        // Global State/Constants
         const TYPES_TABLE_NAME = 'document_types';
         let documentTypes = []; // [{name: 'Executive Order', id: 1}, ...]
 
@@ -231,16 +238,18 @@
 
         // Login UI Elements
         const loginViewContainer = document.getElementById('login-view-container');
-        const appViewContainer = document.getElementById('app-view-container');
-        const loginForm = document.getElementById('login-form');
         const logoutButton = document.getElementById('logout-button');
+        const loginForm = document.getElementById('login-form');
 
         // View and Filter Control Elements
         const formViewContainer = document.getElementById('form-view-container');
-        const listViewContainer = document.getElementById('list-view-container');
         const viewToggleButton = document.getElementById('view-toggle-button');
+        
+        // Search Elements
+        const searchForm = document.getElementById('search-form');
         const searchInput = document.getElementById('search-input');
-        const filterType = document.getElementById('filter-type');
+        const refreshButton = document.getElementById('refresh-button');
+        
         const documentCategoriesContainer = document.getElementById('document-categories-container');
         
         // Type Management Elements
@@ -249,16 +258,22 @@
         const addTypeButton = document.getElementById('add-type-button');
         const typeTagsContainer = document.getElementById('type-tags');
         const typeLoadingMessage = document.getElementById('type-loading-message');
+        const typeManagementContainer = document.getElementById('type-management-container'); 
 
-        // Modal Elements (for Confirmation Dialog)
+        // Modal Elements
         const confirmationModal = document.getElementById('confirmation-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalMessage = document.getElementById('modal-message');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
         const modalCancelBtn = document.getElementById('modal-cancel-btn');
         
-        // State for pending confirmation action
-        let pendingAction = null; 
+        const linkModal = document.getElementById('link-modal');
+        const linkFileForm = document.getElementById('link-file-form');
+        const linkDocIdInput = document.getElementById('link-doc-id');
+        const linkDocNumberSpan = document.getElementById('link-doc-number');
+        const fileLinkInput = document.getElementById('file-link-input');
+        const linkCancelBtn = document.getElementById('link-cancel-btn');
+
 
         /**
          * Clears the form, resets the hidden ID, and sets the UI back to 'Add New Document' mode.
@@ -277,37 +292,30 @@
          * @param {boolean} showForm - True to show form, false to show list.
          */
         function toggleFormVisibility(showForm = formViewContainer.classList.contains('hidden')) {
-            if (!user) return; // Prevent view change if not logged in
+            if (!user) return; // Only admin can toggle form
 
             if (showForm) {
-                // Ensure form is reset before showing it
                 resetDocumentForm(); 
                 formViewContainer.classList.remove('hidden');
-                listViewContainer.classList.add('hidden');
-                document.getElementById('type-management-container').classList.add('hidden');
+                typeManagementContainer.classList.add('hidden');
                 viewToggleButton.textContent = '← Back to Document Dashboard';
             } else {
                 formViewContainer.classList.add('hidden');
-                listViewContainer.classList.remove('hidden');
-                document.getElementById('type-management-container').classList.remove('hidden');
+                typeManagementContainer.classList.remove('hidden');
                 viewToggleButton.textContent = 'Record New Document';
-                // When returning to the dashboard, refresh the list, though the realtime listener handles this too
-                fetchAndRenderDocuments();
+                fetchAndRenderDocuments(); // Refresh when returning to the dashboard
             }
         }
-
+        
         /**
          * Converts document type to a corresponding Tailwind color class.
          * @param {string} type - The document type string.
          * @returns {string} Tailwind class string.
          */
         function getTypeColor(type) {
-            // Use specific colors for known types, default for new types based on keywords
             if (type.includes('Executive')) return 'bg-red-100 text-red-800 ring-red-500';
             if (type.includes('Memorandum')) return 'bg-blue-100 text-blue-800 ring-blue-500';
             if (type.includes('Urgent')) return 'bg-yellow-100 text-yellow-800 ring-yellow-500';
-            
-            // Default color for dynamically added types
             return 'bg-gray-100 text-gray-800 ring-gray-500';
         }
 
@@ -318,7 +326,6 @@
          */
         function showNotification(message, type = 'success') {
             notificationBox.textContent = message;
-            // Ensure classes are properly set for the new type
             if (type === 'success') {
                 notificationBox.classList.remove('bg-red-500');
                 notificationBox.classList.add('bg-green-500');
@@ -329,7 +336,6 @@
             
             notificationBox.classList.remove('hidden');
             
-            // Show the notification for 3 seconds
             setTimeout(() => {
                 notificationBox.classList.add('hidden');
             }, 3000);
@@ -350,11 +356,9 @@
                 
                 confirmationModal.classList.remove('hidden');
 
-                // Clear existing listeners to prevent duplicates
                 modalConfirmBtn.onclick = null;
                 modalCancelBtn.onclick = null;
 
-                // Set new listeners
                 modalConfirmBtn.onclick = () => {
                     confirmationModal.classList.add('hidden');
                     resolve(true);
@@ -388,15 +392,14 @@
 
             if (error) {
                 console.error("Login error:", error);
-                // Use the notification box for the error message
                 showNotification(`Login failed: ${error.message}`, 'error');
                 loginButton.textContent = 'Sign In';
                 loginButton.disabled = false;
             } else {
-                // Success is handled by the onAuthStateChange listener
                 loginForm.reset();
                 loginButton.textContent = 'Sign In';
                 loginButton.disabled = false;
+                // Success is handled by the onAuthStateChange listener
             }
         }
 
@@ -410,41 +413,48 @@
                 console.error("Logout error:", error);
                 showNotification('Logout failed.', 'error');
             } else {
-                showNotification('Logged out successfully.', 'success');
+                showNotification('Logged out successfully. You are now in read-only mode.', 'success');
             }
         }
 
         /**
          * Updates the UI state based on the current authentication session.
+         * Note: The main dashboard is always visible, but admin features are hidden/shown here.
          * @param {Object} session - The current Supabase session object.
          */
         function updateUIForAuth(session) {
-            if (session) {
-                user = session.user;
-                // Show App View, Hide Login View
-                appViewContainer.classList.remove('hidden');
-                loginViewContainer.classList.add('hidden');
+            user = session ? session.user : null;
+
+            if (user) {
+                // ADMIN (Logged In) VIEW
+                loginViewContainer.classList.add('hidden'); 
+                logoutButton.classList.remove('hidden');
                 viewToggleButton.classList.remove('hidden');
-                authStatus.textContent = `User: ${user.email} | DB Status: Connected`;
+                typeManagementContainer.classList.remove('hidden');
+                authStatus.textContent = `User: ${user.email} | DB Status: Connected (Admin)`;
                 
-                // Load document types and then documents
-                fetchAndRenderDocumentTypes(); 
-                toggleFormVisibility(false); 
+                // Switch to list view when logging in
+                if (formViewContainer.classList.contains('hidden')) {
+                     toggleFormVisibility(false); 
+                }
+
             } else {
-                user = null;
-                // Hide App View, Show Login View
-                appViewContainer.classList.add('hidden');
-                loginViewContainer.classList.remove('hidden');
+                // PUBLIC (Read-Only) VIEW
+                loginViewContainer.classList.remove('hidden'); 
+                logoutButton.classList.add('hidden');
                 viewToggleButton.classList.add('hidden');
-                authStatus.textContent = 'Please log in to manage documents.';
-                documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">Log in to view documents.</p>';
-                typeTagsContainer.innerHTML = '';
+                formViewContainer.classList.add('hidden'); 
+                typeManagementContainer.classList.add('hidden');
+                authStatus.textContent = 'DB Status: Connected (Read-Only Mode)';
             }
+            
+            // Regardless of login status, fetch types and documents 
+            // The type fetch is non-blocking and always calls document fetch next.
+            fetchAndRenderDocumentTypes(); 
         }
 
         /**
          * Sets up the real-time listener for a given table.
-         * This is crucial for real-time updates (INSERT, UPDATE, DELETE).
          */
         function setupRealtimeListener(tableName, callback) {
              supabase
@@ -454,10 +464,8 @@
                     { event: '*', schema: 'public', table: tableName },
                     (payload) => {
                         console.log(`Realtime change received for ${tableName}:`, payload.eventType);
-                        // Always call the callback if the user is authenticated. 
-                        // This ensures that any change (add/edit/delete) is immediately reflected 
-                        // in the document list (even if filtered/searched).
-                        if (user) {
+                        // Only auto-update if the document list is currently visible to prevent race conditions when editing
+                        if (user || formViewContainer.classList.contains('hidden')) {
                              callback();
                         }
                     }
@@ -486,6 +494,7 @@
             }
 
             try {
+                // Use the anonymous key for read access
                 supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 console.log("Supabase client initialized.");
                 
@@ -494,8 +503,11 @@
                     updateUIForAuth(session);
                 });
 
-                // Setup Realtime Listeners for both documents and types
-                // This ensures all users see real-time updates when adding, editing, or deleting documents/types.
+                // Get initial session state for the first render
+                const { data: { session } } = await supabase.auth.getSession();
+                updateUIForAuth(session);
+
+                // Setup Realtime Listeners
                 setupRealtimeListener(TABLE_NAME, fetchAndRenderDocuments);
                 setupRealtimeListener(TYPES_TABLE_NAME, fetchAndRenderDocumentTypes);
 
@@ -508,11 +520,9 @@
         // --- TYPE MANAGEMENT FUNCTIONS (CRUD) ---
 
         /**
-         * Renders the available document types into the form select and filter select.
+         * Renders the available document types into the form select (Admin only).
          */
         function renderFormSelects() {
-            const filterTypeSelect = document.getElementById('filter-type');
-            
             // 1. Update Document Form Select (#docType)
             const formOptions = documentTypes.map(type => 
                 `<option value="${type.name}">${type.name}</option>`
@@ -520,18 +530,10 @@
             
             docTypeSelect.innerHTML = 
                 `<option value="" disabled selected>Select a document type</option>` + formOptions;
-
-            // 2. Update Filter Select (#filter-type)
-            const filterOptions = documentTypes.map(type => 
-                `<option value="${type.name}">${type.name}</option>`
-            ).join('');
-            
-            filterTypeSelect.innerHTML = 
-                `<option value="all">Filter by Type (All)</option>` + filterOptions;
         }
 
         /**
-         * Renders the current list of available types as tags with delete buttons.
+         * Renders the current list of available types as tags with delete buttons (Admin only).
          */
         function renderTypeList() {
             typeTagsContainer.innerHTML = '';
@@ -546,35 +548,35 @@
                 tag.className = 'flex items-center bg-indigo-100 text-indigo-800 text-sm font-medium pr-1 rounded-full shadow-sm';
                 tag.innerHTML = `
                     <span class="px-3 py-1">${type.name}</span>
+                    ${user ? `
                     <button data-type-id="${type.id}" data-type-name="${type.name}" 
                             class="delete-type-btn p-1 text-indigo-500 hover:text-red-600 rounded-full transition duration-150 ease-in-out">
-                        <!-- Trash icon (Lucide via SVG) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash">
                             <path d="M3 6h18"/>
                             <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
                             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                         </svg>
-                    </button>
+                    </button>` : ''}
                 `;
                 typeTagsContainer.appendChild(tag);
             });
             
-            // Add listeners for the new delete buttons
-            document.querySelectorAll('.delete-type-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const typeId = e.currentTarget.dataset.typeId;
-                    const typeName = e.currentTarget.dataset.typeName;
-                    // Use the custom modal instead of window.confirm
-                    handleDeleteType(typeId, typeName);
+            // Add listeners for the new delete buttons (only if admin is logged in)
+            if (user) {
+                document.querySelectorAll('.delete-type-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const typeId = e.currentTarget.dataset.typeId;
+                        const typeName = e.currentTarget.dataset.typeName;
+                        handleDeleteType(typeId, typeName);
+                    });
                 });
-            });
+            }
         }
 
         /**
          * Fetches document types from the database and updates UI elements.
          */
         async function fetchAndRenderDocumentTypes() {
-             if (!user) return; 
              typeLoadingMessage.classList.remove('hidden');
              
              const { data, error } = await supabase
@@ -585,15 +587,18 @@
              typeLoadingMessage.classList.add('hidden');
              
              if (error) {
-                console.error("Error fetching document types:", error);
-                showNotification(`Error fetching types: ${error.message}`, 'error');
-                return;
+                console.error("Error fetching document types (This is often an RLS issue):", error);
+                // Set documentTypes to empty array on error, but proceed to document fetch
+                documentTypes = []; 
+             } else {
+                 documentTypes = data;
+                 if (user) {
+                     renderFormSelects(); 
+                     renderTypeList();   
+                 }
              }
-
-             documentTypes = data;
-             renderFormSelects();
-             renderTypeList();
-             // Important: Re-render documents using the new type list
+             
+             // Important: ALWAYS trigger document rendering/fetching, even if types failed/are empty.
              fetchAndRenderDocuments();
         }
 
@@ -616,7 +621,7 @@
                     .insert([{ name: newTypeName }]);
 
                 if (error) {
-                    if (error.code === '23505') { // Unique violation error code
+                    if (error.code === '23505') { 
                         showNotification(`Error: The type "${newTypeName}" already exists.`, 'error');
                     } else {
                         throw error;
@@ -624,9 +629,7 @@
                 } else {
                     showNotification(`New type "${newTypeName}" added successfully!`);
                     newTypeForm.reset();
-                    // Real-time listener will call fetchAndRenderDocumentTypes()
                 }
-
             } catch (error) {
                 console.error("Error adding new type:", error);
                 showNotification(`Error: Could not add type. ${error.message}`, 'error');
@@ -644,7 +647,6 @@
         async function handleDeleteType(typeId, typeName) {
             if (!user) return showNotification('You must be logged in to delete a type.', 'error');
 
-            // Find if any documents use this type 
             const { count, error: countError } = await supabase
                 .from(TABLE_NAME)
                 .select('id', { count: 'exact', head: true })
@@ -678,11 +680,7 @@
                 if (error) throw error;
                 
                 showNotification(`Type "${typeName}" deleted successfully!`);
-                
-                // FIX: Manually trigger the fetch/render after successful delete 
-                // to ensure immediate UI update, even if the real-time listener is delayed.
                 await fetchAndRenderDocumentTypes(); 
-                // The real-time listener will still fire, but this ensures instant visual feedback.
 
             } catch (error) {
                 console.error("Error deleting type:", error);
@@ -690,100 +688,107 @@
             }
         }
         
-        // --- DOCUMENT FUNCTIONS (READ/UPDATE/DELETE) ---
+        // --- DOCUMENT FUNCTIONS (READ/LINK/DELETE) ---
 
         /**
-         * Alias for fetching documents to handle search/filter UI events.
+         * Handles the search action.
          */
-        function handleSearchAndFilter() {
-            if (user) {
-                fetchAndRenderDocuments();
-            }
+        function handleSearchAndFilter(event) {
+            event.preventDefault(); 
+            // Documents are fetched regardless of login status
+            fetchAndRenderDocuments();
         }
 
         /**
-         * Fetches documents from Supabase and renders them, applying current filters.
+         * Fetches documents from Supabase and renders them, applying current search.
          */
         async function fetchAndRenderDocuments() {
-            if (!user) return; // Must be logged in to fetch data
-
             loadingMessage.classList.remove('hidden');
-            // Do NOT clear container here, as a fast update could cause flicker.
-            // Clearing happens in renderDocuments now.
 
-            let query = supabase.from(TABLE_NAME).select('*');
-            
-            // 1. Apply Type Filter
-            const selectedType = filterType.value;
-            if (selectedType && selectedType !== 'all') {
-                query = query.eq('type', selectedType);
-            }
+            let query = supabase.from(TABLE_NAME)
+                .select('*')
+                .order('date', { ascending: false });
 
-            const { data: documents, error } = await query
-                .order('timestamp', { ascending: false }); 
-            
+            const { data: documents, error } = await query;
+
             loadingMessage.classList.add('hidden');
 
             if (error) {
                 console.error("Error fetching documents:", error);
-                documentCategoriesContainer.innerHTML = `<p class="text-center text-red-500 p-8">Error fetching documents: ${error.message}</p>`;
+                // FINAL, DEFINITIVE RLS ERROR MESSAGE
+                documentCategoriesContainer.innerHTML = `<p class="text-center text-red-600 font-bold p-8 border-2 border-red-300 bg-red-50 rounded-lg">
+                    🚨 Document Fetch Failed: ${error.message}<br><br>
+                    This confirms a **Row Level Security (RLS)** issue on the **\`document_records\`** table.<br>
+                    To fix this permanently, you MUST log into your Supabase dashboard and create an RLS policy that grants **SELECT** permission to the **\`anon\`** role.
+                </p>`;
                 return;
             }
-            
+
             let filteredDocuments = documents;
-            
-            // In-memory search filtering (if a search term exists)
+
+            // --- Apply Search ---
             const searchTerm = searchInput.value.trim().toLowerCase();
             if (searchTerm) {
-                 filteredDocuments = documents.filter(doc => 
-                    doc.docNumber.toLowerCase().includes(searchTerm) || 
-                    doc.title.toLowerCase().includes(searchTerm)
-                 );
+                filteredDocuments = documents.filter(doc =>
+                    (doc.docNumber && doc.docNumber.toLowerCase().includes(searchTerm)) ||
+                    (doc.title && doc.title.toLowerCase().includes(searchTerm))
+                );
             }
 
-            renderDocuments(filteredDocuments, selectedType);
+            renderDocuments(filteredDocuments); 
         }
 
         /**
-         * Fetches a single document and switches the UI to edit mode.
-         * @param {number} docId - The ID of the document to edit.
+         * Shows the modal to link a file and populates it with document data.
          */
-        async function handleEditDocument(docId) {
-             if (!user) return showNotification('You must be logged in to edit a document.', 'error');
+        function handleLinkFile(docId, docNumber, currentUrl) {
+             if (!user) return showNotification('You must be logged in as an admin to link a file.', 'error');
              
-             // Fetch the document data
-             const { data: document, error } = await supabase
-                .from(TABLE_NAME)
-                .select('*')
-                .eq('id', docId)
-                .single();
-
-             if (error) {
-                 console.error("Error fetching document for edit:", error);
-                 showNotification(`Error: Could not load document for editing. ${error.message}`, 'error');
-                 return;
-             }
+             linkDocIdInput.value = docId;
+             linkDocNumberSpan.textContent = docNumber;
+             fileLinkInput.value = currentUrl || ''; // Pre-fill if a link already exists
              
-             // Populate the form fields
-             docIdInput.value = document.id;
-             docNumberInput.value = document.docNumber;
-             docTitleInput.value = document.title;
-             docDateInput.value = document.date; // already in YYYY-MM-DD format
-             docTypeSelect.value = document.type;
-             
-             // Update the form UI to indicate editing mode
-             formTitle.textContent = `Edit Document: #${document.docNumber}`;
-             submitButton.textContent = 'Update Document';
-             cancelEditButton.classList.remove('hidden');
-             
-             // Switch view
-             toggleFormVisibility(true);
+             linkModal.classList.remove('hidden');
         }
 
         /**
-         * Handles the deletion of a document. (DELETE)
-         * @param {number} docId - The ID of the document to delete.
-         * @param {string} docNumber - The document number for display.
+         * Handles the form submission for updating the document's file link. (Admin only)
+         */
+        async function handleUpdateFileLink(event) {
+            event.preventDefault();
+            if (!user) return showNotification('You must be logged in to update a file link.', 'error');
+
+            const docId = linkDocIdInput.value;
+            const newFileUrl = fileLinkInput.value.trim();
+            const docNumber = linkDocNumberSpan.textContent;
+
+            const confirmBtn = document.getElementById('link-confirm-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Saving...';
+
+            try {
+                const { error } = await supabase
+                    .from(TABLE_NAME)
+                    .update({ fileUrl: newFileUrl }) 
+                    .eq('id', docId);
+
+                if (error) throw error;
+                
+                showNotification(`File link for Document #${docNumber} saved successfully!`);
+                linkModal.classList.add('hidden');
+                linkFileForm.reset(); 
+                
+            } catch (error) {
+                console.error("Error updating file link:", error);
+                showNotification(`Error: Could not save file link. ${error.message}`, 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Save Link';
+            }
+        }
+
+        /**
+         * Handles the deletion of a document. (Admin only)
          */
         async function handleDeleteDocument(docId, docNumber) {
             if (!user) return showNotification('You must be logged in to delete a document.', 'error');
@@ -807,7 +812,6 @@
                 if (error) throw error;
                 
                 showNotification(`Document #${docNumber} deleted successfully!`);
-                // Real-time listener will now handle re-rendering the list
                 
             } catch (error) {
                 console.error("Error deleting document:", error);
@@ -819,26 +823,22 @@
         /**
          * Renders the list of documents grouped by type into the UI.
          */
-        function renderDocuments(documents, currentFilter) {
-            documentCategoriesContainer.innerHTML = ''; // Clear container for fresh render
+        function renderDocuments(documents) {
+            documentCategoriesContainer.innerHTML = ''; 
 
             if (!documents || documents.length === 0) {
                 documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
                 return;
             }
 
-            // Use the dynamically loaded documentTypes names for categories
             const allCategories = documentTypes.map(type => type.name);
-            
-            // Filter categories based on the current selection
-            const categoriesToDisplay = currentFilter === 'all'
-                ? allCategories
-                // Ensure only the selected filter is displayed if it exists in the dynamic list
-                : allCategories.filter(cat => cat === currentFilter); 
+            // Include 'Additional Documents' as a fallback category header if it is needed
+            const categoriesToDisplay = [...allCategories]; 
 
             // Group documents by type
             const groupedDocs = documents.reduce((acc, doc) => {
-                const type = doc.type || 'Additional'; 
+                // If document type is empty or invalid (not in current types list), fall back to 'Additional Documents'
+                const type = doc.type && allCategories.includes(doc.type) ? doc.type : 'Additional Documents'; 
                 if (!acc[type]) {
                     acc[type] = [];
                 }
@@ -846,6 +846,11 @@
                 return acc;
             }, {});
 
+            // Ensure the 'Additional Documents' category is at the end if it exists in the documents
+            if (groupedDocs['Additional Documents'] && !categoriesToDisplay.includes('Additional Documents')) {
+                categoriesToDisplay.push('Additional Documents');
+            }
+            
             // Render each category section
             categoriesToDisplay.forEach(category => {
                 const docs = groupedDocs[category];
@@ -853,7 +858,6 @@
                     const categorySection = document.createElement('div');
                     categorySection.className = 'mb-6';
                     
-                    // Generate color for the category header (based on keywords for consistency)
                     const headerColor = category.includes('Executive') ? 'border-red-500 text-red-700' :
                                         category.includes('Memorandum') ? 'border-blue-500 text-blue-700' :
                                         category.includes('Urgent') ? 'border-yellow-500 text-yellow-700' :
@@ -863,9 +867,33 @@
                     
                     // Document Cards for this category
                     const docCards = docs.map(doc => {
-                        const colorClass = getTypeColor(doc.type);
-                        const date = doc.date ? new Date(doc.date + 'T00:00:00').toLocaleDateString() : 'N/A';
+                        // Use the type stored in the document, which may be different if the type was deleted
+                        const colorClass = getTypeColor(doc.type); 
                         
+                        // View File button (Always visible if link exists)
+                        const viewFileButton = doc.fileUrl ? 
+                            `<a href="${doc.fileUrl}" target="_blank" rel="noopener noreferrer"
+                                class="bg-indigo-600 text-white p-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition">
+                                View File
+                            </a>` : 
+                            `<button disabled 
+                                class="bg-gray-400 text-white p-2 rounded-lg font-medium text-sm cursor-not-allowed">
+                                View File
+                            </button>`;
+
+                        // Admin Buttons (Conditional rendering based on login status)
+                        const adminButtons = user ? `
+                            <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}" data-current-url="${doc.fileUrl || ''}"
+                                    class="link-file-btn bg-green-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-green-600 transition">
+                                Link File
+                            </button>
+                            <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
+                                    class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
+                                Delete
+                            </button>
+                        ` : '';
+
+
                         return `
                             <div class="bg-white p-4 rounded-lg border border-gray-100 mb-3 hover:shadow-md transition duration-200 flex justify-between items-center flex-wrap gap-2">
                                 <div class="flex-grow min-w-[200px]">
@@ -878,14 +906,8 @@
                                     <p class="text-lg font-bold text-gray-900 mt-1">${doc.title}</p>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
-                                            class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
-                                        Delete
-                                    </button>
-                                    <button data-doc-id="${doc.id}" 
-                                            class="edit-doc-btn bg-indigo-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-indigo-600 transition">
-                                        Edit
-                                    </button>
+                                    ${viewFileButton}
+                                    ${adminButtons}
                                 </div>
                             </div>
                         `;
@@ -900,33 +922,37 @@
                 documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
             }
 
-            // Add event listeners for the new Edit and Delete buttons
-            document.querySelectorAll('.edit-doc-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const docId = parseInt(e.currentTarget.dataset.docId);
-                    handleEditDocument(docId);
+            // Only attach event listeners for admin functionality if admin is logged in
+            if (user) {
+                document.querySelectorAll('.link-file-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const docId = parseInt(e.currentTarget.dataset.docId);
+                        const docNumber = e.currentTarget.dataset.docNumber;
+                        const currentUrl = e.currentTarget.dataset.currentUrl;
+                        // Directly use the data attributes as the necessary info is passed in the button's data
+                        handleLinkFile(docId, docNumber, currentUrl);
+                    });
                 });
-            });
-            document.querySelectorAll('.delete-doc-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const docId = parseInt(e.currentTarget.dataset.docId);
-                    const docNumber = e.currentTarget.dataset.docNumber;
-                    handleDeleteDocument(docId, docNumber);
+                document.querySelectorAll('.delete-doc-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const docId = parseInt(e.currentTarget.dataset.docId);
+                        const docNumber = e.currentTarget.dataset.docNumber;
+                        handleDeleteDocument(docId, docNumber);
+                    });
                 });
-            });
+            }
         }
 
         /**
-         * Handles the form submission to save (INSERT) or update (UPDATE) a document.
+         * Handles the form submission to save (INSERT) a new document. (Admin only)
          */
         async function handleFormSubmit(event) {
             event.preventDefault();
-            if (!user) return showNotification('You must be logged in to record or update a document.', 'error');
+            if (!user) return showNotification('You must be logged in to record a new document.', 'error');
 
-            const idToEdit = docIdInput.value;
             const docNumber = docNumberInput.value.trim();
             const docTitle = docTitleInput.value.trim();
-            const docDate = docDateInput.value; // YYYY-MM-DD format
+            const docDate = docDateInput.value; 
             const docType = docTypeSelect.value;
 
             if (!docNumber || !docTitle || !docDate || !docType) {
@@ -939,52 +965,53 @@
                 title: docTitle,
                 date: docDate, 
                 type: docType,
+                fileUrl: null, 
             };
 
             submitButton.disabled = true;
-            submitButton.textContent = idToEdit ? 'Updating...' : 'Saving...';
+            submitButton.textContent = 'Saving...';
 
             try {
-                let error;
-                if (idToEdit) {
-                    // UPDATE operation
-                    ({ error } = await supabase
-                        .from(TABLE_NAME)
-                        .update(documentData)
-                        .eq('id', idToEdit));
+                const { error } = await supabase
+                    .from(TABLE_NAME)
+                    .insert([documentData]);
 
-                    if (error) throw error;
-                    showNotification('Document updated successfully!');
-                } else {
-                    // INSERT operation
-                    ({ error } = await supabase
-                        .from(TABLE_NAME)
-                        .insert([documentData]));
-
-                    if (error) throw error;
-                    showNotification('Document recorded successfully!');
-                }
+                if (error) throw error;
                 
-                resetDocumentForm(); // Clear form state
-                toggleFormVisibility(false); // Switch back to the list view. Realtime listener handles re-render.
+                showNotification('Document recorded successfully! You can now link a file on the dashboard.');
+                
+                resetDocumentForm(); 
+                toggleFormVisibility(false); 
 
             } catch (error) {
                 console.error("Error submitting document:", error);
-                showNotification(`Error: Could not save/update document. ${error.message}`, 'error');
+                showNotification(`Error: Could not save document. ${error.message}`, 'error');
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = idToEdit ? 'Update Document' : 'Record Document';
+                submitButton.textContent = 'Record Document';
             }
         }
 
         // --- Event Listeners ---
         form.addEventListener('submit', handleFormSubmit);
         viewToggleButton.addEventListener('click', () => toggleFormVisibility());
-        cancelEditButton.addEventListener('click', () => toggleFormVisibility(false)); // Cancel and go back to list
+        cancelEditButton.addEventListener('click', () => toggleFormVisibility(false)); 
         loginForm.addEventListener('submit', handleLogin);
         logoutButton.addEventListener('click', handleLogout);
         newTypeForm.addEventListener('submit', handleNewTypeSubmit); 
-        // Search and Filter handlers are in the HTML using oninput/onchange
+        searchForm.addEventListener('submit', handleSearchAndFilter);
+        
+        refreshButton.addEventListener('click', () => {
+            fetchAndRenderDocuments();
+            showNotification('Document list refreshed.', 'success');
+        });
+
+        // Link Modal Listeners
+        linkFileForm.addEventListener('submit', handleUpdateFileLink);
+        linkCancelBtn.addEventListener('click', () => {
+            linkModal.classList.add('hidden');
+            linkFileForm.reset();
+        });
 
         // Initialize the application when the script loads
         initializeSupabase();
