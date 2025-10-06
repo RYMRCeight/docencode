@@ -592,35 +592,7 @@ async function fetchAndRenderDocumentTypes() {
         }
         
         // --- TYPE MANAGEMENT FUNCTIONS (CRUD) ---
-async function fetchAndRenderDocumentTypes() {
-    // Show a small loading indicator for the type list
-    typeLoadingMessage.classList.remove('hidden'); 
-
-    const { data: types, error } = await supabase
-        .from(TYPES_TABLE_NAME)
-        // Ensure 'is_public' is fetched for the public view filter
-        .select('id, name, is_public') 
-        .order('name', { ascending: true }); // Order alphabetically
-
-    typeLoadingMessage.classList.add('hidden');
-
-    if (error) {
-        console.error("Error fetching document types:", error);
-        showNotification(`Error loading document types: ${error.message}`, 'error');
-        documentTypes = []; // Clear types on error
-    } else {
-        documentTypes = types || [];
-    }
-
-    // 1. Update the document creation form dropdown
-    renderFormSelects(); 
-    
-    // 2. Update the admin management list with public toggles
-    renderTypeList();
-    
-    // 3. CRUCIAL: Trigger the final document fetch
-    fetchAndRenderDocuments(); 
-}
+/* duplicate fetchAndRenderDocumentTypes removed */
         /**
          * Renders the available document types into the form select (Admin only).
          */
@@ -886,40 +858,7 @@ async function fetchAndRenderDocumentTypes() {
         /**
          * Fetches documents from Supabase and renders them, applying current search.
          */
-        async function fetchAndRenderDocuments() {
-            loadingMessage.classList.remove('hidden');
-
-            let query = supabase.from(TABLE_NAME)
-                .select('*')
-            
-            const { data: documents, error } = await query;
-
-            loadingMessage.classList.add('hidden');
-
-            if (error) {
-                console.error("Error fetching documents:", error);
-                // FINAL, DEFINITIVE RLS ERROR MESSAGE
-                documentCategoriesContainer.innerHTML = `<p class="text-center text-red-600 font-bold p-8 border-2 border-red-300 bg-red-50 rounded-lg">
-                    🚨 Document Fetch Failed: ${error.message}<br><br>
-                    This confirms a **Row Level Security (RLS)** issue on the **\`document_records\`** table.<br>
-                    To fix this permanently, you MUST log into your Supabase dashboard and create an RLS policy that grants **SELECT** permission to the **\`anon\`** role.
-                </p>`;
-                return;
-            }
-
-            let filteredDocuments = documents;
-
-            // --- Apply Search ---
-            const searchTerm = searchInput.value.trim().toLowerCase();
-            if (searchTerm) {
-                filteredDocuments = documents.filter(doc =>
-                    (doc.docNumber && doc.docNumber.toLowerCase().includes(searchTerm)) ||
-                    (doc.title && doc.title.toLowerCase().includes(searchTerm))
-                );
-            }
-
-            renderDocuments(filteredDocuments); 
-        }
+        /* duplicate fetchAndRenderDocuments removed */
 
         /**
          * Shows the modal to link a file and populates it with document data.
@@ -1225,7 +1164,3 @@ async function fetchAndRenderDocumentTypes() {
 
 </body>
 </html>
-
-
-
-
