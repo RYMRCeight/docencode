@@ -320,6 +320,48 @@
         }
 
         /**
+ * A natural sort function for strings that contain numbers.
+ * This is crucial for sorting document numbers like '1', '10', '2' correctly.
+ * @param {string} a - First string.
+ * @param {string} b - Second string.
+ * @returns {number} Standard sort comparison result (-1, 0, 1).
+ */
+function naturalSort(a, b) {
+    if (a === b) return 0;
+    if (!a) return 1; // Put null/undefined/empty at the end
+    if (!b) return -1;
+
+    // Regex to split string into numeric and non-numeric parts
+    const re = /(^([+-]?\d*(\.\d*)?)([eE][+-]?\d+)?$|^0x[\da-fA-F]+$|\d+)/g;
+    const tokensA = a.toString().match(re) || [a.toString()];
+    const tokensB = b.toString().match(re) || [b.toString()];
+
+    for (let i = 0; i < Math.min(tokensA.length, tokensB.length); i++) {
+        const tokenA = tokensA[i];
+        const tokenB = tokensB[i];
+
+        const floatA = parseFloat(tokenA);
+        const floatB = parseFloat(tokenB);
+
+        // If both tokens are numbers, compare them numerically
+        if (!isNaN(floatA) && !isNaN(floatB) && floatA === floatB) {
+            // Numbers are equal, continue to next token for tie-breaking
+            continue;
+        } else if (!isNaN(floatA) && !isNaN(floatB)) {
+            // One number is larger
+            return floatA - floatB;
+        }
+
+        // If not numbers, compare them as strings
+        if (tokenA < tokenB) return -1;
+        if (tokenA > tokenB) return 1;
+    }
+
+    // Fallback for strings of different lengths (e.g., 'a1' vs 'a1b')
+    return tokensA.length - tokensB.length;
+}
+        
+        /**
          * Shows a temporary notification message.
          * @param {string} message - The message to display.
          * @param {string} type - 'success' or 'error'.
@@ -707,8 +749,7 @@
 
             let query = supabase.from(TABLE_NAME)
                 .select('*')
-                .order('date', { ascending: false });
-
+            
             const { data: documents, error } = await query;
 
             loadingMessage.classList.add('hidden');
@@ -826,123 +867,145 @@
         function renderDocuments(documents) {
             documentCategoriesContainer.innerHTML = ''; 
 
-            if (!documents || documents.length === 0) {
-                documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
-                return;
+    if (!documents || documents.length === 0) {
+        documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
+        return;
+    }
+
+    // Group documents by type
+    const groupedDocs = documents.reduce((acc, doc) => {
+        // Use doc.type or fall back to 'Uncategorized Documents'
+        const type = doc.type || 'Uncategorized Documents'; 
+        if (!acc[type]) {
+            acc[type] = [];
+        }
+        acc[type].push(doc);
+        return acc;
+    }, {});
+
+    // Get all unique categories from the documents and sort them alphabetically
+    let categoriesToDisplay = Object.keys(groupedDocs).sort();
+    
+    // If 'Uncategorized Documents' exists, move it to the end
+    const uncategorizedIndex = categoriesToDisplay.indexOf('Uncategorized Documents');
+    if (uncategorizedIndex > -1) {
+        categoriesToDisplay.splice(uncategorizedIndex, 1);
+        categoriesToDisplay.push('Uncategorized Documents');
+    }
+
+
+    // Render each category section
+    categoriesToDisplay.forEach(category => {
+        let docs = groupedDocs[category];
+        
+        // --- CORE CHANGE: SORT WITHIN CATEGORY ---
+        // 1. Sort by Document Number using natural sort
+        // 2. Secondary sort by Date (newest first, descending) for documents with the same number
+        docs.sort((a, b) => {
+            const numSort = naturalSort(a.docNumber, b.docNumber);
+            if (numSort !== 0) {
+                return numSort;
             }
 
-            const allCategories = documentTypes.map(type => type.name);
-            // Include 'Additional Documents' as a fallback category header if it is needed
-            const categoriesToDisplay = [...allCategories]; 
+            // Secondary sort by Date
+            return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        // ------------------------------------------
 
-            // Group documents by type
-            const groupedDocs = documents.reduce((acc, doc) => {
-                // If document type is empty or invalid (not in current types list), fall back to 'Additional Documents'
-                const type = doc.type && allCategories.includes(doc.type) ? doc.type : 'Additional Documents'; 
-                if (!acc[type]) {
-                    acc[type] = [];
-                }
-                acc[type].push(doc);
-                return acc;
-            }, {});
+        const categorySection = document.createElement('div');
+        categorySection.className = 'mb-6';
+        
+        const headerColor = category.includes('Executive') ? 'border-red-500 text-red-700' :
+                            category.includes('Memorandum') ? 'border-blue-500 text-blue-700' :
+                            category.includes('Urgent') ? 'border-yellow-500 text-yellow-700' :
+                            'border-gray-500 text-gray-700';
 
-            // Ensure the 'Additional Documents' category is at the end if it exists in the documents
-            if (groupedDocs['Additional Documents'] && !categoriesToDisplay.includes('Additional Documents')) {
-                categoriesToDisplay.push('Additional Documents');
-            }
+        let categoryHtml = `<h3 class="text-xl font-semibold mb-4 pb-2 border-b-2 ${headerColor}">${category} (${docs.length})</h3>`;
+        
+        // Document Cards for this category
+        const docCards = docs.map(doc => {
+            const colorClass = getTypeColor(doc.type); 
             
-            // Render each category section
-            categoriesToDisplay.forEach(category => {
-                const docs = groupedDocs[category];
-                if (docs && docs.length > 0) {
-                    const categorySection = document.createElement('div');
-                    categorySection.className = 'mb-6';
-                    
-                    const headerColor = category.includes('Executive') ? 'border-red-500 text-red-700' :
-                                        category.includes('Memorandum') ? 'border-blue-500 text-blue-700' :
-                                        category.includes('Urgent') ? 'border-yellow-500 text-yellow-700' :
-                                        'border-gray-500 text-gray-700';
-
-                    let categoryHtml = `<h3 class="text-xl font-semibold mb-4 pb-2 border-b-2 ${headerColor}">${category} (${docs.length})</h3>`;
-                    
-                    // Document Cards for this category
-                    const docCards = docs.map(doc => {
-                        // Use the type stored in the document, which may be different if the type was deleted
-                        const colorClass = getTypeColor(doc.type); 
-                        
-                        // View File button (Always visible if link exists)
-                        const viewFileButton = doc.fileUrl ? 
-                            `<a href="${doc.fileUrl}" target="_blank" rel="noopener noreferrer"
-                                class="bg-indigo-600 text-white p-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition">
-                                View File
-                            </a>` : 
-                            `<button disabled 
-                                class="bg-gray-400 text-white p-2 rounded-lg font-medium text-sm cursor-not-allowed">
-                                View File
-                            </button>`;
-
-                        // Admin Buttons (Conditional rendering based on login status)
-                        const adminButtons = user ? `
-                            <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}" data-current-url="${doc.fileUrl || ''}"
-                                    class="link-file-btn bg-green-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-green-600 transition">
-                                Link File
-                            </button>
-                            <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
-                                    class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
-                                Delete
-                            </button>
-                        ` : '';
-
-
-                        return `
-                            <div class="bg-white p-4 rounded-lg border border-gray-100 mb-3 hover:shadow-md transition duration-200 flex justify-between items-center flex-wrap gap-2">
-                                <div class="flex-grow min-w-[200px]">
-                                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full ring-1 ring-inset ${colorClass} mb-1 inline-block">
-                                        ${doc.type}
-                                    </span>
-                                    <p class="text-sm font-medium text-gray-500 mt-1">
-                                        # <span class="font-bold text-gray-700">${doc.docNumber}</span>
-                                    </p>
-                                    <p class="text-lg font-bold text-gray-900 mt-1">${doc.title}</p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    ${viewFileButton}
-                                    ${adminButtons}
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    categorySection.innerHTML = categoryHtml + docCards;
-                    documentCategoriesContainer.appendChild(categorySection);
-                }
+            // Format the date for display
+            const displayDate = new Date(doc.date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
             });
 
-            if (documentCategoriesContainer.innerHTML === '') {
-                documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
-            }
+            // View File button (Always visible if link exists)
+            const viewFileButton = doc.fileUrl ? 
+                `<a href="${doc.fileUrl}" target="_blank" rel="noopener noreferrer"
+                    class="bg-indigo-600 text-white p-2 rounded-lg font-medium text-sm hover:bg-indigo-700 transition">
+                    View File
+                </a>` : 
+                `<button disabled 
+                    class="bg-gray-400 text-white p-2 rounded-lg font-medium text-sm cursor-not-allowed">
+                    View File
+                </button>`;
 
-            // Only attach event listeners for admin functionality if admin is logged in
-            if (user) {
-                document.querySelectorAll('.link-file-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const docId = parseInt(e.currentTarget.dataset.docId);
-                        const docNumber = e.currentTarget.dataset.docNumber;
-                        const currentUrl = e.currentTarget.dataset.currentUrl;
-                        // Directly use the data attributes as the necessary info is passed in the button's data
-                        handleLinkFile(docId, docNumber, currentUrl);
-                    });
-                });
-                document.querySelectorAll('.delete-doc-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const docId = parseInt(e.currentTarget.dataset.docId);
-                        const docNumber = e.currentTarget.dataset.docNumber;
-                        handleDeleteDocument(docId, docNumber);
-                    });
-                });
-            }
-        }
+            // Admin Buttons (Conditional rendering based on login status)
+            const adminButtons = user ? `
+                <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}" data-current-url="${doc.fileUrl || ''}"
+                        class="link-file-btn bg-green-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-green-600 transition">
+                    Link File
+                </button>
+                <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
+                        class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
+                    Delete
+                </button>
+            ` : '';
 
+
+            return `
+                <div class="bg-white p-4 rounded-lg border border-gray-100 mb-3 hover:shadow-md transition duration-200 flex justify-between items-center flex-wrap gap-2">
+                    <div class="flex-grow min-w-[200px]">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="px-2 py-0.5 text-xs font-semibold rounded-full ring-1 ring-inset ${colorClass} inline-block">
+                                ${doc.type || 'Uncategorized'}
+                            </span>
+                            <span class="text-xs text-gray-500">${displayDate}</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-500 mt-1">
+                            # <span class="font-bold text-gray-700">${doc.docNumber}</span>
+                        </p>
+                        <p class="text-lg font-bold text-gray-900 mt-1">${doc.title}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        ${viewFileButton}
+                        ${adminButtons}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        categorySection.innerHTML = categoryHtml + docCards;
+        documentCategoriesContainer.appendChild(categorySection);
+    });
+
+    if (documentCategoriesContainer.innerHTML === '') {
+        documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents found matching the current criteria.</p>';
+    }
+
+    // Only attach event listeners for admin functionality if admin is logged in
+    if (user) {
+        document.querySelectorAll('.link-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const docId = parseInt(e.currentTarget.dataset.docId);
+                const docNumber = e.currentTarget.dataset.docNumber;
+                const currentUrl = e.currentTarget.dataset.currentUrl;
+                handleLinkFile(docId, docNumber, currentUrl);
+            });
+        });
+        document.querySelectorAll('.delete-doc-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const docId = parseInt(e.currentTarget.dataset.docId);
+                const docNumber = e.currentTarget.dataset.docNumber;
+                handleDeleteDocument(docId, docNumber);
+            });
+        });
+    }
+}
         /**
          * Handles the form submission to save (INSERT) a new document. (Admin only)
          */
@@ -1020,3 +1083,4 @@
 
 </body>
 </html>
+
