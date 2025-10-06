@@ -564,40 +564,50 @@ async function fetchAndRenderDocumentTypes() {
         /**
          * Initializes Supabase client and sets up auth and realtime listeners.
          */
-        async function initializeSupabase() {
-            authStatus.textContent = 'Initializing connection...';
+    async function initializeSupabase() {
+  try {
+    authStatus.textContent = 'Connecting to Supabase...';
 
-            if (SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
-                const errorMsg = "ERROR: Supabase credentials are not set.";
-                console.error(errorMsg);
-                authStatus.textContent = errorMsg;
-                submitButton.disabled = true;
-                return;
-            }
+    // Initialize Supabase client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            try {
-                // Use the anonymous key for read access
-                supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log("Supabase client initialized.");
-                
-                // Set up Auth State Listener
-                supabase.auth.onAuthStateChange((event, session) => {
-                    updateUIForAuth(session);
-                });
+    // Fetch session safely
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Error fetching session:", error);
+      authStatus.textContent = 'Connected to Supabase (No session)';
+    }
 
-                // Get initial session state for the first render
-                const { data: { session } } = await supabase.auth.getSession();
-                updateUIForAuth(session);
+    const session = data?.session || null;
 
-                // Setup Realtime Listeners
-                setupRealtimeListener(TABLE_NAME, fetchAndRenderDocuments);
-                setupRealtimeListener(TYPES_TABLE_NAME, fetchAndRenderDocumentTypes);
+    // Update UI based on auth state
+    updateUIForAuth(session);
 
-            } catch (error) {
-                console.error("Error during Supabase initialization:", error);
-                authStatus.textContent = `Error: ${error.message}`;
-            }
-        }
+    // If not logged in, still continue loading document types for public
+    if (!session) {
+      authStatus.textContent = 'Connected (Public Mode)';
+      fetchAndRenderDocumentTypes(); // allow guests to view allowed types
+    } else {
+      authStatus.textContent = 'Logged in as Admin';
+    }
+
+    // Listen for login/logout changes
+    supabase.auth.onAuthStateChange((_event, session) => {
+      updateUIForAuth(session);
+      if (!session) {
+        authStatus.textContent = 'Connected (Public Mode)';
+        fetchAndRenderDocumentTypes();
+      } else {
+        authStatus.textContent = 'Logged in as Admin';
+      }
+    });
+
+  } catch (err) {
+    console.error("Initialization error:", err);
+    authStatus.textContent = 'Failed to initialize Supabase. Check console for details.';
+  }
+}
+
         
         // --- TYPE MANAGEMENT FUNCTIONS (CRUD) ---
 /* duplicate fetchAndRenderDocumentTypes removed */
@@ -1244,6 +1254,7 @@ typeTagsContainer.appendChild(item);
 
 </body>
 </html>
+
 
 
 
