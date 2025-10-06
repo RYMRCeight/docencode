@@ -251,6 +251,7 @@
 
         // View and Filter Control Elements
         const formViewContainer = document.getElementById('form-view-container');
+        const listViewContainer = document.getElementById('list-view-container'); // ADDED: Need to reference the list container
         const viewToggleButton = document.getElementById('view-toggle-button');
         
         // Search Elements
@@ -305,10 +306,12 @@
             if (showForm) {
                 resetDocumentForm(); 
                 formViewContainer.classList.remove('hidden');
+                listViewContainer.classList.add('hidden'); // ADDED: Hide list view
                 typeManagementContainer.classList.add('hidden');
                 viewToggleButton.textContent = '← Back to Document Dashboard';
             } else {
                 formViewContainer.classList.add('hidden');
+                listViewContainer.classList.remove('hidden'); // ADDED: Show list view
                 typeManagementContainer.classList.remove('hidden');
                 viewToggleButton.textContent = 'Record New Document';
                 fetchAndRenderDocuments(); // Refresh when returning to the dashboard
@@ -842,7 +845,7 @@ typeTagsContainer.appendChild(item);
             }
         }
         
-        // --- DOCUMENT FUNCTIONS (READ/LINK/DELETE) ---
+        // --- DOCUMENT FUNCTIONS (READ/LINK/DELETE/EDIT) ---
 
         /**
          * Handles the search action.
@@ -852,11 +855,6 @@ typeTagsContainer.appendChild(item);
             // Documents are fetched regardless of login status
             fetchAndRenderDocuments();
         }
-
-        /**
-         * Fetches documents from Supabase and renders them, applying current search.
-         */
-        /* duplicate fetchAndRenderDocuments removed */
 
         /**
          * Shows the modal to link a file and populates it with document data.
@@ -939,45 +937,49 @@ typeTagsContainer.appendChild(item);
             }
         }
 
+        /**
+         * Handles click on Edit Document button. (Admin only)
+         */
         async function handleEditDocument(id, docNumber, title, date, type) {
-  if (!user) {
-    showNotification('You must be logged in to edit a document.', 'error');
-    return;
-  }
+            if (!user) {
+                showNotification('You must be logged in to edit a document.', 'error');
+                return;
+            }
 
-  // Store the ID (so we know it’s an update later)
-  docIdInput.value = id || '';
+            // Store the ID (so we know it’s an update later)
+            docIdInput.value = id || '';
 
-  // Prefill visible fields
-  docNumberInput.value = docNumber || '';
-  docTitleInput.value = title || '';
+            // Prefill visible fields
+            docNumberInput.value = docNumber || '';
+            docTitleInput.value = title || '';
 
-  // Fix date if it includes time (e.g., 2025-10-06T00:00:00Z → 2025-10-06)
-  if (date) {
-    const formattedDate = date.split('T')[0];
-    docDateInput.value = formattedDate;
-  } else {
-    docDateInput.value = '';
-  }
+            // Fix date if it includes time (e.g., 2025-10-06T00:00:00Z → 2025-10-06)
+            if (date) {
+                const formattedDate = date.split('T')[0];
+                docDateInput.value = formattedDate;
+            } else {
+                docDateInput.value = '';
+            }
 
-  // Ensure the type exists in the dropdown before setting
-  if (type && !Array.from(docTypeSelect.options).some(opt => opt.value === type)) {
-    const newOption = document.createElement('option');
-    newOption.value = type;
-    newOption.textContent = type;
-    docTypeSelect.appendChild(newOption);
-  }
-  docTypeSelect.value = type || '';
+            // Ensure the type exists in the dropdown before setting
+            if (type && !Array.from(docTypeSelect.options).some(opt => opt.value === type)) {
+                const newOption = document.createElement('option');
+                newOption.value = type;
+                newOption.textContent = type;
+                docTypeSelect.appendChild(newOption);
+            }
+            docTypeSelect.value = type || '';
 
-  // Switch form to edit mode
-  formTitle.textContent = `Edit Document #${docNumber}`;
-  submitButton.textContent = 'Update Document';
-  cancelEditButton.classList.remove('hidden');
+            // Switch form to edit mode
+            formTitle.textContent = `Edit Document #${docNumber}`;
+            submitButton.textContent = 'Update Document';
+            cancelEditButton.classList.remove('hidden');
 
-  // Show form, hide list
-  formViewContainer.classList.remove('hidden');
-  listViewContainer.classList.add('hidden');
-}
+            // Show form, hide list
+            formViewContainer.classList.remove('hidden');
+            listViewContainer.classList.add('hidden'); // CRITICAL: Hide the list view
+            typeManagementContainer.classList.add('hidden'); // CRITICAL: Hide type management
+        }
 
 
         /**
@@ -1131,22 +1133,24 @@ typeTagsContainer.appendChild(item);
                 handleDeleteDocument(docId, docNumber);
             });
         });
+        // --- FIX: ATTACH EDIT LISTENER HERE AFTER ELEMENTS ARE RENDERED ---
+        document.querySelectorAll('.edit-doc-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const el = e.currentTarget;
+                // Read all the info we placed in the data-* attributes
+                const id = el.dataset.docId || el.getAttribute('data-doc-id');
+                const number = el.dataset.docNumber || el.getAttribute('data-doc-number');
+                const title = el.dataset.title || el.getAttribute('data-title');
+                const date = el.dataset.date || el.getAttribute('data-date');
+                const type = el.dataset.type || el.getAttribute('data-type');
+
+                handleEditDocument(id, number, title, date, type);
+            });
+        });
+        // ------------------------------------------------------------------
     }
 }
-      // --- EDIT BUTTON LISTENER ---
-document.querySelectorAll('.edit-doc-btn').forEach(button => {
-  button.addEventListener('click', (e) => {
-    const el = e.currentTarget;
-    // Read all the info we placed in the data-* attributes
-    const id = el.dataset.docId || el.getAttribute('data-doc-id');
-    const number = el.dataset.docNumber || el.getAttribute('data-doc-number');
-    const title = el.dataset.title || el.getAttribute('data-title');
-    const date = el.dataset.date || el.getAttribute('data-date');
-    const type = el.dataset.type || el.getAttribute('data-type');
-
-    handleEditDocument(id, number, title, date, type);
-  });
-});
+      // --- REMOVED THE OLD, DISSOCIATED EDIT BUTTON LISTENER HERE ---
         /**
          * Handles the form submission to save (INSERT) a new document. (Admin only)
          */
@@ -1205,7 +1209,8 @@ document.querySelectorAll('.edit-doc-btn').forEach(button => {
 
         resetDocumentForm(); // reset fields & hide edit mode
         toggleFormVisibility(false); // return to list view
-        fetchAndRenderDocuments(); // refresh your dashboard list
+        // The realtime listener should handle the refresh, but keeping this for robustness
+        // fetchAndRenderDocuments(); 
 
     } catch (error) {
         console.error('Error submitting document:', error);
@@ -1219,7 +1224,11 @@ document.querySelectorAll('.edit-doc-btn').forEach(button => {
         // --- Event Listeners ---
         form.addEventListener('submit', handleFormSubmit);
         viewToggleButton.addEventListener('click', () => toggleFormVisibility());
-        cancelEditButton.addEventListener('click', () => toggleFormVisibility(false)); 
+        // Updated cancel logic to explicitly show list view
+        cancelEditButton.addEventListener('click', () => { 
+            resetDocumentForm();
+            toggleFormVisibility(false);
+        }); 
         loginForm.addEventListener('submit', handleLogin);
         logoutButton.addEventListener('click', handleLogout);
         newTypeForm.addEventListener('submit', handleNewTypeSubmit); 
