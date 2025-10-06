@@ -88,17 +88,25 @@
                         </select>
                     </div>
 
-                    <div class="flex gap-4">
-                        <button type="submit" id="submit-button"
-                                class="flex-1 bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 ease-in-out shadow-lg transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                            Record Document
-                        </button>
-                        <button type="button" id="cancel-edit-button" class="hidden w-auto bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-500 transition duration-150 ease-in-out">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-            </section>
+                 <div class="flex gap-4">
+  <button
+    type="submit"
+    id="submit-button"
+    class="flex-1 bg-indigo-600 text-white py-3 rounded-lg"
+  >
+    Record Document
+  </button>
+
+  <button
+    type="button"
+    id="cancel-edit-button"
+    class="hidden bg-gray-400 text-white py-3 px-4 rounded-lg"
+  >
+    Cancel
+  </button>
+</div>
+</form>
+</section>
 
 
             <section id="list-view-container">
@@ -931,6 +939,46 @@ typeTagsContainer.appendChild(item);
             }
         }
 
+        async function handleEditDocument(id, docNumber, title, date, type) {
+  if (!user) {
+    showNotification('You must be logged in to edit a document.', 'error');
+    return;
+  }
+
+  // Store the ID (so we know it’s an update later)
+  docIdInput.value = id || '';
+
+  // Prefill visible fields
+  docNumberInput.value = docNumber || '';
+  docTitleInput.value = title || '';
+
+  // Fix date if it includes time (e.g., 2025-10-06T00:00:00Z → 2025-10-06)
+  if (date) {
+    const formattedDate = date.split('T')[0];
+    docDateInput.value = formattedDate;
+  } else {
+    docDateInput.value = '';
+  }
+
+  // Ensure the type exists in the dropdown before setting
+  if (type && !Array.from(docTypeSelect.options).some(opt => opt.value === type)) {
+    const newOption = document.createElement('option');
+    newOption.value = type;
+    newOption.textContent = type;
+    docTypeSelect.appendChild(newOption);
+  }
+  docTypeSelect.value = type || '';
+
+  // Switch form to edit mode
+  formTitle.textContent = `Edit Document #${docNumber}`;
+  submitButton.textContent = 'Update Document';
+  cancelEditButton.classList.remove('hidden');
+
+  // Show form, hide list
+  formViewContainer.classList.remove('hidden');
+  listViewContainer.classList.add('hidden');
+}
+
 
         /**
          * Renders the list of documents grouped by type into the UI.
@@ -1017,15 +1065,23 @@ typeTagsContainer.appendChild(item);
 
             // Admin Buttons (Conditional rendering based on login status)
             const adminButtons = user ? `
-                <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}" data-current-url="${doc.fileUrl || ''}"
-                        class="link-file-btn bg-green-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-green-600 transition">
-                    Link File
-                </button>
-                <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
-                        class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
-                    Delete
-                </button>
-            ` : '';
+    <button data-doc-id="${doc.id}" 
+            data-doc-number="${doc.docNumber}" 
+            data-title="${(doc.title || '').replace(/"/g, '&quot;')}" 
+            data-date="${doc.date}" 
+            data-type="${(doc.type || '').replace(/"/g, '&quot;')}"
+            class="edit-doc-btn bg-yellow-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-yellow-600 transition">
+        Edit
+    </button>
+    <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}" data-current-url="${doc.fileUrl || ''}"
+            class="link-file-btn bg-green-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-green-600 transition">
+        Link File
+    </button>
+    <button data-doc-id="${doc.id}" data-doc-number="${doc.docNumber}"
+            class="delete-doc-btn bg-red-500 text-white p-2 rounded-lg font-medium text-sm hover:bg-red-600 transition">
+        Delete
+    </button>
+` : '';
 
 
             return `
@@ -1077,54 +1133,88 @@ typeTagsContainer.appendChild(item);
         });
     }
 }
+      // --- EDIT BUTTON LISTENER ---
+document.querySelectorAll('.edit-doc-btn').forEach(button => {
+  button.addEventListener('click', (e) => {
+    const el = e.currentTarget;
+    // Read all the info we placed in the data-* attributes
+    const id = el.dataset.docId || el.getAttribute('data-doc-id');
+    const number = el.dataset.docNumber || el.getAttribute('data-doc-number');
+    const title = el.dataset.title || el.getAttribute('data-title');
+    const date = el.dataset.date || el.getAttribute('data-date');
+    const type = el.dataset.type || el.getAttribute('data-type');
+
+    handleEditDocument(id, number, title, date, type);
+  });
+});
         /**
          * Handles the form submission to save (INSERT) a new document. (Admin only)
          */
         async function handleFormSubmit(event) {
-            event.preventDefault();
-            if (!user) return showNotification('You must be logged in to record a new document.', 'error');
+    event.preventDefault();
 
-            const docNumber = docNumberInput.value.trim();
-            const docTitle = docTitleInput.value.trim();
-            const docDate = docDateInput.value; 
-            const docType = docTypeSelect.value;
+    if (!user)
+        return showNotification('You must be logged in to record or update a document.', 'error');
 
-            if (!docNumber || !docTitle || !docDate || !docType) {
-                showNotification('Please fill in all fields.', 'error');
-                return;
-            }
+    const id = docIdInput.value.trim(); // 👈 this hidden field decides Add vs Edit
+    const docNumber = docNumberInput.value.trim();
+    const docTitle = docTitleInput.value.trim();
+    const docDate = docDateInput.value;
+    const docType = docTypeSelect.value;
 
-            const documentData = {
-                docNumber,
-                title: docTitle,
-                date: docDate, 
-                type: docType,
-                fileUrl: null, 
-            };
+    if (!docNumber || !docTitle || !docDate || !docType) {
+        showNotification('Please fill in all fields.', 'error');
+        return;
+    }
 
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
+    const documentData = {
+        docNumber,
+        title: docTitle,
+        date: docDate,
+        type: docType,
+        fileUrl: null, // keep your existing field
+    };
 
-            try {
-                const { error } = await supabase
-                    .from(TABLE_NAME)
-                    .insert([documentData]);
+    submitButton.disabled = true;
+    submitButton.textContent = id ? 'Updating...' : 'Saving...';
 
-                if (error) throw error;
-                
-                showNotification('Document recorded successfully! You can now link a file on the dashboard.');
-                
-                resetDocumentForm(); 
-                toggleFormVisibility(false); 
+    try {
+        let error;
 
-            } catch (error) {
-                console.error("Error submitting document:", error);
-                showNotification(`Error: Could not save document. ${error.message}`, 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Record Document';
-            }
+        if (id) {
+            // ✏️ UPDATE existing record
+            ({ error } = await supabase
+                .from(TABLE_NAME)
+                .update(documentData)
+                .eq('id', id));
+        } else {
+            // ➕ INSERT new record
+            ({ error } = await supabase
+                .from(TABLE_NAME)
+                .insert([documentData]));
         }
+
+        if (error) throw error;
+
+        // ✅ Success message differs depending on mode
+        showNotification(
+            id
+                ? 'Document updated successfully!'
+                : 'Document recorded successfully! You can now link a file on the dashboard.'
+        );
+
+        resetDocumentForm(); // reset fields & hide edit mode
+        toggleFormVisibility(false); // return to list view
+        fetchAndRenderDocuments(); // refresh your dashboard list
+
+    } catch (error) {
+        console.error('Error submitting document:', error);
+        showNotification(`Error: Could not save document. ${error.message}`, 'error');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Record Document';
+    }
+}
 
         // --- Event Listeners ---
         form.addEventListener('submit', handleFormSubmit);
@@ -1154,6 +1244,7 @@ typeTagsContainer.appendChild(item);
 
 </body>
 </html>
+
 
 
 
