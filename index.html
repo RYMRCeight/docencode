@@ -592,7 +592,35 @@ async function fetchAndRenderDocumentTypes() {
         }
         
         // --- TYPE MANAGEMENT FUNCTIONS (CRUD) ---
+async function fetchAndRenderDocumentTypes() {
+    // Show a small loading indicator for the type list
+    typeLoadingMessage.classList.remove('hidden'); 
 
+    const { data: types, error } = await supabase
+        .from(TYPES_TABLE_NAME)
+        // Ensure 'is_public' is fetched for the public view filter
+        .select('id, name, is_public') 
+        .order('name', { ascending: true }); // Order alphabetically
+
+    typeLoadingMessage.classList.add('hidden');
+
+    if (error) {
+        console.error("Error fetching document types:", error);
+        showNotification(`Error loading document types: ${error.message}`, 'error');
+        documentTypes = []; // Clear types on error
+    } else {
+        documentTypes = types || [];
+    }
+
+    // 1. Update the document creation form dropdown
+    renderFormSelects(); 
+    
+    // 2. Update the admin management list with public toggles
+    renderTypeList();
+    
+    // 3. CRUCIAL: Trigger the final document fetch
+    fetchAndRenderDocuments(); 
+}
         /**
          * Renders the available document types into the form select (Admin only).
          */
@@ -1197,6 +1225,7 @@ async function fetchAndRenderDocumentTypes() {
 
 </body>
 </html>
+
 
 
 
