@@ -577,72 +577,127 @@ function naturalSort(a, b) {
         /**
          * Renders the current list of available types as tags with delete buttons (Admin only).
          */
-        function renderTypeList() {
-            typeTagsContainer.innerHTML = '';
-            
-            if (documentTypes.length === 0) {
-                typeTagsContainer.innerHTML = `<span class="text-gray-500">No types defined yet.</span>`;
-                return;
-            }
+       function renderTypeList() {
+    typeTagsContainer.innerHTML = '';
+    
+    // Add a label/key for the Public Status column
+    const header = document.createElement('div');
+    header.className = 'grid grid-cols-4 md:grid-cols-6 gap-2 text-sm font-semibold text-gray-600 border-b pb-2 mb-3';
+    header.innerHTML = `
+        <span class="col-span-2 md:col-span-4">Type Name</span>
+        <span class="text-center">Public View</span>
+        <span class="text-center">Action</span>
+    `;
+    typeTagsContainer.appendChild(header);
 
-            documentTypes.forEach(type => {
-                const tag = document.createElement('div');
-                tag.className = 'flex items-center bg-indigo-100 text-indigo-800 text-sm font-medium pr-1 rounded-full shadow-sm';
-                tag.innerHTML = `
-                    <span class="px-3 py-1">${type.name}</span>
-                    ${user ? `
-                    <button data-type-id="${type.id}" data-type-name="${type.name}" 
-                            class="delete-type-btn p-1 text-indigo-500 hover:text-red-600 rounded-full transition duration-150 ease-in-out">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash">
-                            <path d="M3 6h18"/>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+    if (documentTypes.length === 0) {
+        typeTagsContainer.innerHTML += `<p class="text-gray-500 text-center col-span-full">No types defined yet.</p>`;
+        return;
+    }
+
+    documentTypes.forEach(type => {
+        const item = document.createElement('div');
+        item.className = 'grid grid-cols-4 md:grid-cols-6 gap-2 items-center bg-gray-50 p-2 rounded-lg border-b';
+        
+        // Type Name
+        item.innerHTML += `<span class="col-span-2 md:col-span-4 text-gray-800 font-medium">${type.name}</span>`;
+
+        // Public Status Toggle (Admin Only)
+        if (user) {
+            item.innerHTML += `
+                <div class="flex justify-center">
+                    <input type="checkbox" id="public-toggle-${type.id}" 
+                           data-type-id="${type.id}"
+                           ${type.is_public ? 'checked' : ''}
+                           class="public-toggle-btn h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                </div>
+            `;
+            // Delete Button
+            item.innerHTML += `
+                <div class="flex justify-center">
+                    <button data-type-id="${type.id}" data-type-name="${type.name}" 
+                            class="delete-type-btn p-1 text-red-500 hover:text-red-700 rounded-full transition duration-150 ease-in-out">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash">
+                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
                         </svg>
-                    </button>` : ''}
-                `;
-                typeTagsContainer.appendChild(tag);
-            });
-            
-            // Add listeners for the new delete buttons (only if admin is logged in)
-            if (user) {
-                document.querySelectorAll('.delete-type-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const typeId = e.currentTarget.dataset.typeId;
-                        const typeName = e.currentTarget.dataset.typeName;
-                        handleDeleteType(typeId, typeName);
-                    });
-                });
-            }
+                    </button>
+                </div>
+            `;
+        } else {
+             // Read-only display
+             item.innerHTML += `<span class="text-center col-span-2 text-sm font-semibold text-${type.is_public ? 'green-600' : 'red-600'}">${type.is_public ? 'YES' : 'NO'}</span>`;
         }
-
+        
+        typeTagsContainer.appendChild(item);
+    });
+    
+    // Add event listeners for delete buttons (existing logic)
+    if (user) {
+        document.querySelectorAll('.delete-type-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const typeId = e.currentTarget.dataset.typeId;
+                const typeName = e.currentTarget.dataset.typeName;
+                handleDeleteType(typeId, typeName);
+            });
+        });
+        
+        // --- NEW: Add event listener for the public toggles ---
+        document.querySelectorAll('.public-toggle-btn').forEach(checkbox => {
+            checkbox.addEventListener('change', handlePublicToggle);
+        });
+        // ----------------------------------------------------
+    }
+}
         /**
          * Fetches document types from the database and updates UI elements.
          */
-        async function fetchAndRenderDocumentTypes() {
-             typeLoadingMessage.classList.remove('hidden');
-             
-             const { data, error } = await supabase
-                 .from(TYPES_TABLE_NAME)
-                 .select('id, name')
-                 .order('name', { ascending: true });
+        async function fetchAndRenderDocuments() {
+    loadingMessage.classList.remove('hidden');
 
-             typeLoadingMessage.classList.add('hidden');
-             
-             if (error) {
-                console.error("Error fetching document types (This is often an RLS issue):", error);
-                // Set documentTypes to empty array on error, but proceed to document fetch
-                documentTypes = []; 
-             } else {
-                 documentTypes = data;
-                 if (user) {
-                     renderFormSelects(); 
-                     renderTypeList();   
-                 }
-             }
-             
-             // Important: ALWAYS trigger document rendering/fetching, even if types failed/are empty.
-             fetchAndRenderDocuments();
+    // 1. Determine which document types should be shown
+    const publicTypeNames = documentTypes
+        .filter(type => type.is_public === true)
+        .map(type => type.name);
+
+    let query = supabase.from(TABLE_NAME).select('*'); 
+
+    // 2. Apply filtering logic only if the user is NOT logged in (Public View)
+    if (!user) {
+        if (publicTypeNames.length > 0) {
+            // Filter documents to include only public types
+            query = query.in('type', publicTypeNames);
+        } else {
+             // If no types are marked public, prevent any documents from being fetched
+             loadingMessage.classList.add('hidden');
+             documentCategoriesContainer.innerHTML = '<p class="text-center text-gray-500 p-8">No documents are currently authorized for public view.</p>';
+             return;
         }
+    }
+    // Note: Admins see ALL documents, regardless of the is_public setting.
+
+    const { data: documents, error } = await query;
+
+    loadingMessage.classList.add('hidden');
+
+    if (error) {
+       // ... existing error handling ...
+       // (keep your existing RLS error block)
+       return;
+    }
+
+    // --- Apply Search (Keep existing search logic) ---
+    let filteredDocuments = documents;
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    if (searchTerm) {
+        filteredDocuments = documents.filter(doc =>
+            (doc.docNumber && doc.docNumber.toLowerCase().includes(searchTerm)) ||
+            (doc.title && doc.title.toLowerCase().includes(searchTerm))
+        );
+    }
+    // --------------------------------------------------
+
+    renderDocuments(filteredDocuments); 
+}
 
         /**
          * Handles submission of the new document type form. (CREATE)
@@ -681,6 +736,33 @@ function naturalSort(a, b) {
             }
         }
 
+        async function handlePublicToggle(event) {
+    if (!user) return showNotification('Error: Must be logged in to modify types.', 'error');
+    
+    const typeId = event.currentTarget.dataset.typeId;
+    const isPublic = event.currentTarget.checked;
+    
+    // Disable all toggles while saving to prevent rapid updates
+    document.querySelectorAll('.public-toggle-btn').forEach(btn => btn.disabled = true);
+
+    const { error } = await supabase
+        .from(TYPES_TABLE_NAME)
+        .update({ is_public: isPublic })
+        .eq('id', typeId);
+
+    // Re-enable all toggles
+    document.querySelectorAll('.public-toggle-btn').forEach(btn => btn.disabled = false);
+
+    if (error) {
+        console.error("Error updating public status:", error);
+        showNotification(`Error updating type public status: ${error.message}`, 'error');
+        // Revert UI on error
+        event.currentTarget.checked = !isPublic; 
+    } else {
+        showNotification(`Type public status set to ${isPublic ? 'Visible' : 'Hidden'} for public view.`, 'success');
+        // The realtime listener will trigger fetchAndRenderDocumentTypes, which will refresh all UI elements.
+    }
+}
         /**
          * Handles deletion of a document type. (DELETE)
          * @param {string} typeId - The ID of the document type to delete.
@@ -1083,4 +1165,5 @@ function naturalSort(a, b) {
 
 </body>
 </html>
+
 
