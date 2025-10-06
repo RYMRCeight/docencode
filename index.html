@@ -1116,37 +1116,37 @@ typeTagsContainer.appendChild(item);
 
     // Only attach event listeners for admin functionality if admin is logged in
     if (user) {
-        document.querySelectorAll('.link-file-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const docId = parseInt(e.currentTarget.dataset.docId);
-                const docNumber = e.currentTarget.dataset.docNumber;
-                const currentUrl = e.currentTarget.dataset.currentUrl;
-                handleLinkFile(docId, docNumber, currentUrl);
-            });
-        });
-        document.querySelectorAll('.delete-doc-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const docId = parseInt(e.currentTarget.dataset.docId);
-                const docNumber = e.currentTarget.dataset.docNumber;
-                handleDeleteDocument(docId, docNumber);
-            });
-        });
-    }
-}
-      // --- EDIT BUTTON LISTENER ---
-document.querySelectorAll('.edit-doc-btn').forEach(button => {
-  button.addEventListener('click', (e) => {
-    const el = e.currentTarget;
-    // Read all the info we placed in the data-* attributes
-    const id = el.dataset.docId || el.getAttribute('data-doc-id');
-    const number = el.dataset.docNumber || el.getAttribute('data-doc-number');
-    const title = el.dataset.title || el.getAttribute('data-title');
-    const date = el.dataset.date || el.getAttribute('data-date');
-    const type = el.dataset.type || el.getAttribute('data-type');
-
-    handleEditDocument(id, number, title, date, type);
+  document.querySelectorAll('.link-file-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const docId = parseInt(e.currentTarget.dataset.docId);
+      const docNumber = e.currentTarget.dataset.docNumber;
+      const currentUrl = e.currentTarget.dataset.currentUrl;
+      handleLinkFile(docId, docNumber, currentUrl);
+    });
   });
-});
+
+  document.querySelectorAll('.delete-doc-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const docId = parseInt(e.currentTarget.dataset.docId);
+      const docNumber = e.currentTarget.dataset.docNumber;
+      handleDeleteDocument(docId, docNumber);
+    });
+  });
+
+  // ✅ Moved inside here: make Edit button work
+  document.querySelectorAll('.edit-doc-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+      const el = e.currentTarget;
+      const id = el.dataset.docId;
+      const number = el.dataset.docNumber;
+      const title = el.dataset.title;
+      const date = el.dataset.date;
+      const type = el.dataset.type;
+
+      handleEditDocument(id, number, title, date, type);
+    });
+  });
+}
         /**
          * Handles the form submission to save (INSERT) a new document. (Admin only)
          */
@@ -1244,6 +1244,7 @@ document.querySelectorAll('.edit-doc-btn').forEach(button => {
 
 </body>
 </html>
+
 
 
 
