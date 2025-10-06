@@ -614,12 +614,12 @@ async function fetchAndRenderDocumentTypes() {
     
     // Add a label/key for the Public Status column
     const header = document.createElement('div');
-    header.className = 'grid grid-cols-4 md:grid-cols-6 gap-2 text-sm font-semibold text-gray-600 border-b pb-2 mb-3';
-    header.innerHTML = `
-        <span class="col-span-2 md:col-span-4">Type Name</span>
-        <span class="text-center">Public View</span>
-        <span class="text-center">Action</span>
-    `;
+    header.className = 'grid grid-cols-3 gap-2 text-sm font-semibold text-gray-600 border-b pb-2 mb-3';
+header.innerHTML = `
+    <span>Type Name</span>
+    <span class="text-center">Public View</span>
+    <span class="text-center">Action</span>
+`;
     typeTagsContainer.appendChild(header);
 
     if (documentTypes.length === 0) {
@@ -629,38 +629,28 @@ async function fetchAndRenderDocumentTypes() {
 
     documentTypes.forEach(type => {
         const item = document.createElement('div');
-        item.className = 'grid grid-cols-4 md:grid-cols-6 gap-2 items-center bg-gray-50 p-2 rounded-lg border-b';
-        
-        // Type Name
-        item.innerHTML += `<span class="col-span-2 md:col-span-4 text-gray-800 font-medium">${type.name}</span>`;
-
-        // Public Status Toggle (Admin Only)
-        if (user) {
-            item.innerHTML += `
-                <div class="flex justify-center">
-                    <input type="checkbox" id="public-toggle-${type.id}" 
-                           data-type-id="${type.id}"
-                           ${type.is_public ? 'checked' : ''}
-                           class="public-toggle-btn h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                </div>
-            `;
-            // Delete Button
-            item.innerHTML += `
-                <div class="flex justify-center">
-                    <button data-type-id="${type.id}" data-type-name="${type.name}" 
-                            class="delete-type-btn p-1 text-red-500 hover:text-red-700 rounded-full transition duration-150 ease-in-out">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash">
-                            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                        </svg>
-                    </button>
-                </div>
-            `;
-        } else {
-             // Read-only display
-             item.innerHTML += `<span class="text-center col-span-2 text-sm font-semibold text-${type.is_public ? 'green-600' : 'red-600'}">${type.is_public ? 'YES' : 'NO'}</span>`;
-        }
-        
-        typeTagsContainer.appendChild(item);
+        item.className = 'grid grid-cols-3 gap-2 items-center bg-gray-50 p-2 rounded-lg border-b';
+item.innerHTML += `<span class="text-gray-800 font-medium truncate">${type.name}</span>`;
+if (user) {
+    item.innerHTML += `
+        <div class="flex justify-center">
+            <input type="checkbox" id="public-toggle-${type.id}" data-type-id="${type.id}" ${type.is_public ? 'checked' : ''} class="public-toggle-btn h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+        </div>
+        <div class="flex justify-center">
+            <button data-type-id="${type.id}" data-type-name="${type.name}" class="delete-type-btn p-1 text-red-500 hover:text-red-700 rounded-full transition duration-150 ease-in-out">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash">
+                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                </svg>
+            </button>
+        </div>
+    `;
+} else {
+    item.innerHTML += `
+        <span class="text-center text-sm font-semibold text-${type.is_public ? 'green-600' : 'red-600'}">${type.is_public ? 'YES' : 'NO'}</span>
+        <span></span>
+    `;
+}
+typeTagsContainer.appendChild(item);
     });
     
     // Add event listeners for delete buttons (existing logic)
@@ -1164,3 +1154,7 @@ async function fetchAndRenderDocumentTypes() {
 
 </body>
 </html>
+
+
+
+
